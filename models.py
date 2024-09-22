@@ -25,7 +25,7 @@ class DailyWeatherRecord(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     latitude: Mapped[str] = mapped_column(String)
     longitude: Mapped[str] = mapped_column(String)
-    date_time: Mapped[DateTime] = mapped_column(DateTime)
+    date_time: Mapped[DateTime] = mapped_column(DateTime, unique=True)
     month: Mapped[int] = mapped_column(Integer)
     day_of_month: Mapped[int] = mapped_column(Integer)
     year: Mapped[int] = mapped_column(Integer)
@@ -85,7 +85,7 @@ class HourlyWeatherRecord(Base):
     location_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("location.id"), default=1
     )
-    date: Mapped[DateTime] = mapped_column(DateTime)
+    date: Mapped[DateTime] = mapped_column(DateTime, unique=True)
     temperature: Mapped[float] = mapped_column(Float)
     precipitation: Mapped[float] = mapped_column(Float)
     wind_speed: Mapped[float] = mapped_column(Float)

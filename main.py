@@ -1,6 +1,6 @@
 from sqlalchemy import insert
 from weather_api_importer import (
-    get_weather_records_by_date,
+    get_hourly_weather_records_by_date,
     insert_hourly_weather_records,
 )
 
@@ -47,7 +47,7 @@ def main():
             conn.commit()
     if args.api_import:
         print("Getting weather records from API")
-        records = get_weather_records_by_date(START_DATE, END_DATE)
+        records = get_hourly_weather_records_by_date(START_DATE, END_DATE)
         insert_hourly_weather_records(records)
     if args.build_daily:
         print("Building daily weather table")

@@ -9,7 +9,7 @@ from constants import ENGINE, LATITUDE, LONGITUDE
 from models import HourlyWeatherRecordInstance
 
 
-def get_weather_records_by_date(start_date: str, end_date: str) -> DataFrame:
+def get_hourly_weather_records_by_date(start_date: str, end_date: str) -> DataFrame:
     cache_session = requests_cache.CachedSession(".cache", expire_after=-1)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
