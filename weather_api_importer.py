@@ -1,3 +1,5 @@
+import pdb
+
 import openmeteo_requests
 import requests_cache
 import pandas as pd
@@ -27,7 +29,7 @@ def get_hourly_weather_records_by_date(start_date: str, end_date: str) -> DataFr
         "timezone": "America/Denver",
     }
     responses = openmeteo.weather_api(url, params=params)
-
+    pdb.set_trace()
     response = responses[0]
     hourly = response.Hourly()
     hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
