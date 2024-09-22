@@ -73,7 +73,7 @@ nbconvert==7.16.4 ; python_version >= '3.8'
 nbformat==5.10.4 ; python_version >= '3.8'
 nest-asyncio==1.6.0 ; python_version >= '3.5'
 notebook-shim==0.2.4 ; python_version >= '3.7'
-notebook==7.2.1 ; python_version >= '3.8'
+notebook==7.2.2 ; python_version >= '3.8'
 numpy==1.26.4
 openmeteo-requests==1.2.0
 openmeteo-sdk==1.11.6 ; python_full_version >= '3.8.1'
