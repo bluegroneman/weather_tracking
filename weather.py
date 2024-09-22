@@ -50,7 +50,6 @@ def update_daily():
         print(f"Updating the daily record table between {latest_date} - {today_date}")
         date_range = pd.date_range(start=latest_date, end=today_date)
         for date in date_range:
-            pdb.set_trace()
             hourly_rolled_up = HourlyWeatherRecord.get_weather_record_on_date(datetime.strftime(date, "%Y-%m-%d"))
             if hourly_rolled_up is not None:
                 record: list = [

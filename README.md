@@ -1,10 +1,9 @@
-# D493 Weather Forecasting app for Lander Wyoming Event Planning
+# Weather Forecasting app for Lander Wyoming
 The Python scripts in this repository are meant to import a set of data from the Open Meteo Historical Weather Data API.
 There are a set of [tests](test_weather_records.py) that can be ran after importing the data set initially.
 
 ## Importing the data set
 **Clone this repository**
-https://gitlab.com/wgu-gitlab-environment/student-repos/bgrone3/d493-scripting-and-programming-applications
 Use SQLite to create a database with the name of `weather.db`
 ```shell
 $ sqlite3 weather.db
