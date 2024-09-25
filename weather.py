@@ -7,13 +7,11 @@ from constants import ENGINE, LATITUDE, LONGITUDE
 from datetime import datetime
 from datetime import timedelta
 import pandas as pd
-from dotenv import load_dotenv
 from weather_api_importer import (
     get_hourly_weather_records_by_date,
     insert_hourly_weather_records,
 )
 
-load_dotenv()
 
 app = typer.Typer()
 
