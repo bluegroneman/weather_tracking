@@ -212,3 +212,5 @@ pipenv/vendor/markupsafe/_speedups.c
 .cache.sqlite
 weather.db
 **Zone.Identifier
+
+*.csv

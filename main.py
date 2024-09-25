@@ -5,7 +5,13 @@ from weather_api_importer import (
 )
 
 
-from models import Base, Location, HourlyWeatherRecord, DailyWeatherRecord, DailyWeatherRecordInstance
+from models import (
+    Base,
+    Location,
+    HourlyWeatherRecord,
+    DailyWeatherRecord,
+    DailyWeatherRecordInstance,
+)
 import pandas as pd
 import argparse
 from constants import ENGINE, START_DATE, END_DATE, LATITUDE, LONGITUDE

@@ -1,4 +1,3 @@
-import pdb
 
 import openmeteo_requests
 import requests_cache
