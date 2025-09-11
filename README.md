@@ -30,6 +30,11 @@ Populate the daily weather records into the daily_weather table;
 ```shell
 $ python main.py -b
 ```
+
+This project now uses Typer for the CLI. You can see available options with:
+```shell
+$ python main.py --help
+```
 In a new SQL console or Database navigator validate the table was populated with the correct columns
 ```sql
 select * from daily_weather;
@@ -54,7 +59,7 @@ $ python Demo.py
 - [retry-requests](https://pypi.org/project/retry-requests/)
 - [numpy](https://pypi.org/project/numpy/)
 - [pandas](https://pypi.org/project/pandas/)
-- [argparse](https://pypi.org/project/argparse/)
+- [typer](https://pypi.org/project/typer/)
 - [ruff](https://pypi.org/project/ruff/)
 - [pytest](https://pypi.org/project/pytest/)
 - [pytest-sugar](https://pypi.org/project/pytest-sugar/)
