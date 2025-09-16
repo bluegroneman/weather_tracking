@@ -1,6 +1,4 @@
-from datetime import datetime
-
-from sqlalchemy import insert
+from sqlalchemy import insert, text, select
 from weather_api_importer import (
     get_hourly_weather_records_by_date,
     insert_hourly_weather_records,
@@ -42,13 +40,25 @@ def migrate():
     logger.info("Creating new table schema...")
     Base.metadata.create_all(ENGINE)
     logger.info("Creating location table data")
-    stmt = insert(Location).values(
-        latitude=LATITUDE, longitude=LONGITUDE, friendly_name="Lander, Wyoming"
-    )
+    with ENGINE.begin() as conn:  # transactional context
+        default_location = conn.execute(
+            select(Location.id).where(
+                Location.latitude == LATITUDE,
+                Location.longitude == LONGITUDE,
+            )
+        ).scalar_one_or_none()
 
-    with ENGINE.connect() as conn:
-        conn.execute(stmt)
-        conn.commit()
+        if default_location is None:
+            conn.execute(
+                insert(Location).values(
+                    latitude=LATITUDE,
+                    longitude=LONGITUDE,
+                    friendly_name="Lander, Wyoming",
+                )
+            )
+            logger.info("Inserted seed location.")
+        else:
+            logger.info("Seed location already present; skipping insert.")
 
 
 @app.command()
@@ -61,6 +71,9 @@ def import_weather_data(
     ),
 ):
     # TODO: Check to ensure weather records between these dates aren't already in the DB
+    # with ENGINE.begin() as conn:
+        # Get oldest date
+        # Get newest date
     logger.info("Importing weather data...")
     # TODO: implement check to ensure start and end date are in the correct format
     logger.info("Getting weather records from API")
@@ -69,10 +82,15 @@ def import_weather_data(
 
 
 @app.command()
-def build_daily_summaries():
+def build_daily_summaries(rebuild: bool = typer.Option(False)):
+    if rebuild:
+        DailyWeatherRecord.__table__.drop(ENGINE, checkfirst=True)
+        DailyWeatherRecord.__table__.create(ENGINE, checkfirst=True)
+    with ENGINE.begin() as conn:
+        select(HourlyWeatherRecord).where(HourlyWeatherRecord.date >= START_DATE)
     logger.info("Building daily summaries...")
-    logger.info("Building daily weather table")
     date_range = pd.date_range(start=START_DATE, end=END_DATE)
+    to_insert = []
     for date in date_range:
         # Format date once for query
         date_str = f"{date.year:04d}-{date.month:02d}-{date.day:02d}"
@@ -88,8 +106,7 @@ def build_daily_summaries():
             except Exception:
                 return value
         payload = dict(
-            latitude=LATITUDE,
-            longitude=LONGITUDE,
+            location_id=1,
             date_time=date,
             month=int(date.month),
             day_of_month=int(date.day),
@@ -104,14 +121,12 @@ def build_daily_summaries():
             precipitation_min=_safe(hourly_rolled_up["precipitation"].min()),
             precipitation_max=_safe(hourly_rolled_up["precipitation"].max()),
         )
-        # If desired, still instantiate the dataclass and explode it to a dict
-        # This shows how to "explode" DailyWeatherRecordInstance while keeping code short.
-        daily_record = DailyWeatherRecordInstance(**payload)
-        from dataclasses import asdict
-        stmt = insert(DailyWeatherRecord).values(**asdict(daily_record))
-        with ENGINE.connect() as cursor:
-            cursor.execute(stmt)
-            cursor.commit()
+        to_insert.append(payload)
+
+    stmt = insert(DailyWeatherRecord)
+    with ENGINE.connect() as cursor:
+        cursor.execute(stmt, to_insert)
+        cursor.commit()
 
 
 if __name__ == "__main__":

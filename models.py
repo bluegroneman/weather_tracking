@@ -6,11 +6,13 @@ from sqlalchemy import (
     DateTime,
     create_engine,
     ForeignKey,
+    Date,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 import pandas as pd
 from pandas import DataFrame
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from dataclasses import dataclass
 
@@ -22,8 +24,7 @@ class Base(DeclarativeBase):
 class DailyWeatherRecord(Base):
     __tablename__ = "daily_weather"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    latitude: Mapped[str] = mapped_column(String)
-    longitude: Mapped[str] = mapped_column(String)
+    location_id: Mapped[int] = mapped_column(ForeignKey("location.id"))
     date_time: Mapped[DateTime] = mapped_column(DateTime, unique=True)
     month: Mapped[int] = mapped_column(Integer)
     day_of_month: Mapped[int] = mapped_column(Integer)
@@ -89,6 +90,43 @@ class HourlyWeatherRecord(Base):
     precipitation: Mapped[float] = mapped_column(Float)
     wind_speed: Mapped[float] = mapped_column(Float)
 
+
+class NOAAStationMonthlySummary(Base):
+    __tablename__ = "noaa_monthly_summary"
+    __table_args__ = (
+        UniqueConstraint("location_id", "date", name="uq_noaa_location_date"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # Normalize location fields: replace LATITUDE, LONGITUDE, NAME with foreign key
+    location_id: Mapped[int] = mapped_column(Integer, ForeignKey("location.id"))
+    # DATE refers to the month represented; store as first day of month (Date)
+    date: Mapped[date] = mapped_column(Date)
+
+    # Metrics from NOAA CSV (all nullable because dataset can have gaps)
+    ADPT: Mapped[float] = mapped_column(Float, nullable=True)  # Avg Dew Point Temp
+    AWND: Mapped[float] = mapped_column(Float, nullable=True)  # Avg Wind Speed
+    CDSD: Mapped[float] = mapped_column(Float, nullable=True)  # Cooling Degree Days (season-to-date)
+    DP01: Mapped[float] = mapped_column(Float, nullable=True)  # Days >= 0.01 in precip
+    DP1X: Mapped[float] = mapped_column(Float, nullable=True)  # Days >= 1.00 in precip
+    DSND: Mapped[float] = mapped_column(Float, nullable=True)  # Days snow depth >= 1 in
+    DSNW: Mapped[float] = mapped_column(Float, nullable=True)  # Days snowfall >= 1 in
+    DT00: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp <= 0 F
+    DT32: Mapped[float] = mapped_column(Float, nullable=True)  # Days min temp <= 32 F
+    DX32: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp <= 32 F
+    DX70: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 70 F
+    DX90: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 90 F
+    EMNT: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme min temp
+    EMXP: Mapped[float] = mapped_column(Float, nullable=True)  # Highest daily precip total
+    EMXT: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme max temp
+    PRCP: Mapped[float] = mapped_column(Float, nullable=True)  # Total Monthly Precipitation
+    PSUN: Mapped[float] = mapped_column(Float, nullable=True)  # Avg daily percent sunshine
+    SNOW: Mapped[float] = mapped_column(Float, nullable=True)  # Total Monthly Snowfall
+    TAVG: Mapped[float] = mapped_column(Float, nullable=True)  # Average Monthly Temperature
+    TMAX: Mapped[float] = mapped_column(Float, nullable=True)  # Monthly Maximum Temperature (avg of daily max)
+    TMIN: Mapped[float] = mapped_column(Float, nullable=True)  # Monthly Minimum Temperature (avg of daily min)
+    TSUN: Mapped[float] = mapped_column(Float, nullable=True)  # Daily total sunshine in minutes
+
     @classmethod
     def get_weather_record_on_date(cls, date: str) -> DataFrame:
         formatted_date = datetime.strptime(date, "%Y-%m-%d")
@@ -104,20 +142,16 @@ class HourlyWeatherRecord(Base):
 
 @dataclass
 class HourlyWeatherRecordInstance:
+    location_id: int
     date: datetime
     temperature: float
     precipitation: float
     wind_speed: float
 
-    @classmethod
-    def from_array(cls, weather_records: list):
-        return cls(*weather_records)
-
 
 @dataclass
 class DailyWeatherRecordInstance:
-    latitude: str
-    longitude: str
+    location_id: int
     date_time: datetime
     month: int
     day_of_month: int
@@ -131,10 +165,6 @@ class DailyWeatherRecordInstance:
     precipitation_sum: float
     precipitation_min: float
     precipitation_max: float
-
-    @classmethod
-    def from_array(cls, weather_records: list):
-        return cls(*weather_records)
 
     @classmethod
     def to_dataframe(cls) -> DataFrame:

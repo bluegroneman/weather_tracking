@@ -50,16 +50,28 @@ def get_hourly_weather_records_by_date(start_date: str, end_date: str) -> DataFr
 
 
 def insert_hourly_weather_records(records: pd.DataFrame):
-    for row in records.itertuples():
-        hourly_weather_record: HourlyWeatherRecordInstance = (
-            HourlyWeatherRecordInstance.from_array(list(row[1::1]))
-        )
-        stmt = insert(HourlyWeatherRecord).values(
-            date=hourly_weather_record.date,
-            temperature=hourly_weather_record.temperature,
-            precipitation=hourly_weather_record.precipitation,
-            wind_speed=hourly_weather_record.wind_speed,
-        )
-        with ENGINE.connect() as cursor:
-            cursor.execute(stmt)
-            cursor.commit()
+    """Bulk insert hourly weather records safely.
+
+    Expects a DataFrame with columns: date, temperature, precipitation, wind_speed.
+    Inserts with executemany in a single transaction.
+    """
+    to_insert = []
+
+    for row in records.itertuples(index=False):
+        payload = {
+            "location_id": 1,
+            # Convert pandas Timestamp (possibly tz-aware) to naive python datetime
+            "date": pd.to_datetime(getattr(row, "date")).to_pydatetime(),
+            "temperature": float(getattr(row, "temperature")),
+            "precipitation": float(getattr(row, "precipitation")),
+            "wind_speed": float(getattr(row, "wind_speed")),
+        }
+        to_insert.append(payload)
+
+    if not to_insert:
+        return
+
+    stmt = insert(HourlyWeatherRecord)
+    # Execute in a transaction; executemany via list of dicts
+    with ENGINE.begin() as conn:
+        conn.execute(stmt, to_insert)
