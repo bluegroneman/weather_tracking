@@ -90,6 +90,18 @@ class HourlyWeatherRecord(Base):
     precipitation: Mapped[float] = mapped_column(Float)
     wind_speed: Mapped[float] = mapped_column(Float)
 
+    @classmethod
+    def get_weather_record_on_date(cls, date: str) -> DataFrame:
+        formatted_date = datetime.strptime(date, "%Y-%m-%d")
+        stmt = (
+            select(cls)
+            .where(cls.date >= formatted_date)
+            .where(cls.date < formatted_date + timedelta(1))
+        )
+        engine = create_engine("sqlite:///weather.db")
+        with engine.connect() as cursor:
+            return pd.DataFrame(cursor.execute(stmt))
+
 
 class NOAAStationMonthlySummary(Base):
     __tablename__ = "noaa_monthly_summary"
@@ -126,18 +138,6 @@ class NOAAStationMonthlySummary(Base):
     TMAX: Mapped[float] = mapped_column(Float, nullable=True)  # Monthly Maximum Temperature (avg of daily max)
     TMIN: Mapped[float] = mapped_column(Float, nullable=True)  # Monthly Minimum Temperature (avg of daily min)
     TSUN: Mapped[float] = mapped_column(Float, nullable=True)  # Daily total sunshine in minutes
-
-    @classmethod
-    def get_weather_record_on_date(cls, date: str) -> DataFrame:
-        formatted_date = datetime.strptime(date, "%Y-%m-%d")
-        stmt = (
-            select(cls)
-            .where(cls.date >= formatted_date)
-            .where(cls.date < formatted_date + timedelta(1))
-        )
-        engine = create_engine("sqlite:///weather.db")
-        with engine.connect() as cursor:
-            return pd.DataFrame(cursor.execute(stmt))
 
 
 @dataclass

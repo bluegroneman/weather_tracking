@@ -17,6 +17,7 @@ import typer
 from constants import ENGINE, START_DATE, END_DATE, LATITUDE, LONGITUDE
 import logging
 from logging.handlers import RotatingFileHandler
+from datetime import datetime, timedelta
 
 # Configure logging to file with rotation
 logger = logging.getLogger(__name__)
@@ -70,63 +71,137 @@ def import_weather_data(
         END_DATE, "-e", "--end-date", help="End date format: YYYY-MM-DD"
     ),
 ):
-    # TODO: Check to ensure weather records between these dates aren't already in the DB
-    # with ENGINE.begin() as conn:
-        # Get oldest date
-        # Get newest date
+    try:
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        end_dt_inclusive = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+    except ValueError:
+        logger.error("Invalid date format. Use YYYY-MM-DD for start and end dates.")
+        raise
     logger.info("Importing weather data...")
-    # TODO: implement check to ensure start and end date are in the correct format
+    existing_ts = set()
+    with ENGINE.connect() as conn:
+        stmt = (
+            select(HourlyWeatherRecord.date)
+            .where(HourlyWeatherRecord.date >= start_dt)
+            .where(HourlyWeatherRecord.date < end_dt_inclusive)
+        )
+        result = conn.execute(stmt).scalars().all()
+        # Normalize to naive datetimes for consistent comparison (drop tz if present)
+        for dt in result:
+            try:
+                if getattr(dt, "tzinfo", None) is not None:
+                    dt = dt.replace(tzinfo=None)
+            except Exception:
+                pass
+            existing_ts.add(dt)
+
+    if existing_ts:
+        logger.info(
+            f"Found {len(existing_ts)} existing hourly records in range {start_date}..{end_date}; will skip duplicates."
+        )
+
     logger.info("Getting weather records from API")
     records = get_hourly_weather_records_by_date(start_date, end_date)
+
+    # Filter out records that already exist
+    if not records.empty and existing_ts:
+        records = records.copy()
+        # Ensure pandas Timestamp is naive (drop timezone) for comparison with DB values
+        records["_date_naive"] = pd.to_datetime(records["date"]).dt.tz_localize(None)
+        before = len(records)
+        records = records[~records["_date_naive"].isin(existing_ts)].drop(
+            columns=["_date_naive"]
+        )
+        after = len(records)
+        skipped = before - after
+        if skipped > 0:
+            logger.info(f"Skipping {skipped} duplicate hourly rows already in DB.")
+
+    if records is None or records.empty:
+        logger.info("No new hourly weather records to insert.")
+        return
+
     insert_hourly_weather_records(records)
 
-
 @app.command()
-def build_daily_summaries(rebuild: bool = typer.Option(False)):
-    if rebuild:
-        DailyWeatherRecord.__table__.drop(ENGINE, checkfirst=True)
-        DailyWeatherRecord.__table__.create(ENGINE, checkfirst=True)
-    with ENGINE.begin() as conn:
-        select(HourlyWeatherRecord).where(HourlyWeatherRecord.date >= START_DATE)
-    logger.info("Building daily summaries...")
-    date_range = pd.date_range(start=START_DATE, end=END_DATE)
-    to_insert = []
-    for date in date_range:
-        # Format date once for query
-        date_str = f"{date.year:04d}-{date.month:02d}-{date.day:02d}"
-        hourly_rolled_up = HourlyWeatherRecord.get_weather_record_on_date(date_str)
-        if hourly_rolled_up is None or hourly_rolled_up.empty:
-            logger.warning(f"No hourly records found for {date_str}; skipping.")
-            continue
-        # Safely compute aggregates (convert NaN to None for DB)
-        def _safe(value):
-            try:
-                import math
-                return None if value is None or (isinstance(value, float) and math.isnan(value)) else value
-            except Exception:
-                return value
-        payload = dict(
-            location_id=1,
-            date_time=date,
-            month=int(date.month),
-            day_of_month=int(date.day),
-            year=int(date.year),
-            average_temperature=_safe(hourly_rolled_up["temperature"].mean()),
-            min_temperature=_safe(hourly_rolled_up["temperature"].min()),
-            max_temperature=_safe(hourly_rolled_up["temperature"].max()),
-            average_wind_speed=_safe(hourly_rolled_up["wind_speed"].mean()),
-            min_wind_speed=_safe(hourly_rolled_up["wind_speed"].min()),
-            max_wind_speed=_safe(hourly_rolled_up["wind_speed"].max()),
-            precipitation_sum=_safe(hourly_rolled_up["precipitation"].sum()),
-            precipitation_min=_safe(hourly_rolled_up["precipitation"].min()),
-            precipitation_max=_safe(hourly_rolled_up["precipitation"].max()),
-        )
-        to_insert.append(payload)
+def build_daily_summaries():
+    """Build daily_weather from ALL data in hourly_weather using pandas.
+    """
+    DailyWeatherRecord.__table__.drop(ENGINE, checkfirst=True)
+    DailyWeatherRecord.__table__.create(ENGINE, checkfirst=True)
 
+    logger.info("Building daily summaries from all hourly data...")
+
+    # Load all hourly data into a DataFrame
+    with ENGINE.connect() as conn:
+        hourly_df = pd.read_sql(
+            "SELECT date, temperature, precipitation, wind_speed FROM hourly_weather",
+            conn,
+        )
+
+    if hourly_df is None or hourly_df.empty:
+        logger.info("No hourly_weather data found; nothing to summarize.")
+        return
+
+    # Ensure proper dtypes and derive the day bucket
+    hourly_df["date"] = pd.to_datetime(hourly_df["date"], errors="coerce")
+    hourly_df["day"] = hourly_df["date"].dt.normalize()
+
+    # Group by day and compute aggregates via pandas
+    agg_df = (
+        hourly_df.groupby("day").agg(
+            average_temperature=("temperature", "mean"),
+            min_temperature=("temperature", "min"),
+            max_temperature=("temperature", "max"),
+            average_wind_speed=("wind_speed", "mean"),
+            min_wind_speed=("wind_speed", "min"),
+            max_wind_speed=("wind_speed", "max"),
+            precipitation_sum=("precipitation", "sum"),
+            precipitation_min=("precipitation", "min"),
+            precipitation_max=("precipitation", "max"),
+        )
+        .reset_index()
+        .rename(columns={"day": "date_time"})
+    )
+
+    if agg_df.empty:
+        logger.info("Aggregation produced no rows; nothing to insert.")
+        return
+
+    # Add calendar columns and location_id
+    agg_df["month"] = agg_df["date_time"].dt.month.astype(int)
+    agg_df["day_of_month"] = agg_df["date_time"].dt.day.astype(int)
+    agg_df["year"] = agg_df["date_time"].dt.year.astype(int)
+    agg_df["location_id"] = 1
+
+    # Reorder columns to match the model
+    agg_df = agg_df[
+        [
+            "location_id",
+            "date_time",
+            "month",
+            "day_of_month",
+            "year",
+            "average_temperature",
+            "min_temperature",
+            "max_temperature",
+            "average_wind_speed",
+            "min_wind_speed",
+            "max_wind_speed",
+            "precipitation_sum",
+            "precipitation_min",
+            "precipitation_max",
+        ]
+    ]
+
+    records = agg_df.to_dict(orient="records")
     stmt = insert(DailyWeatherRecord)
-    with ENGINE.connect() as cursor:
-        cursor.execute(stmt, to_insert)
-        cursor.commit()
+    with ENGINE.begin() as conn:
+        for record in records:
+            conn.execute(stmt, record)
+
+        conn.commit()
+        logger.info(f"Inserted {len(records)} daily summary rows.")
 
 
 if __name__ == "__main__":
