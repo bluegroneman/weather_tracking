@@ -158,13 +158,13 @@ class NOAAStationMonthlySummary(Base):
     SNOW: Mapped[float] = mapped_column(Float, nullable=True)  # Total Monthly Snowfall
     TAVG: Mapped[float] = mapped_column(
         Float, nullable=True
-    )  # Average Monthly Temperature
+    )  # Average Monthly Temperature (c)
     TMAX: Mapped[float] = mapped_column(
         Float, nullable=True
-    )  # Monthly Maximum Temperature (avg of daily max)
+    )  # Monthly Maximum Temperature (c) (avg of daily max)
     TMIN: Mapped[float] = mapped_column(
         Float, nullable=True
-    )  # Monthly Minimum Temperature (avg of daily min)
+    )  # Monthly Minimum Temperature (c) (avg of daily min)
     WDF2: Mapped[int] = mapped_column(
         Integer, nullable=True
     )  # Direction (degrees) of fastest 2-minute wind
