@@ -115,43 +115,68 @@ class NOAAStationMonthlySummary(Base):
     # DATE refers to the month represented; store as first day of month (Date)
     date: Mapped[date] = mapped_column(Date)
 
-    # Metrics from NOAA CSV (all nullable because dataset can have gaps)
-    CDSD: Mapped[float] = mapped_column(Float, nullable=True)  # Cooling Degree Days (season-to-date)
-    CLDD: Mapped[float] = mapped_column(Float, nullable=True)  # Cooling Degree Days (season-to-date)
-    DP01: Mapped[float] = mapped_column(Float, nullable=True)  # Days >= 0.01 in precip
-    DP10: Mapped[float] = mapped_column(Float, nullable=True)  # Days >= 0.01 in precip
-    DP1X: Mapped[float] = mapped_column(Float, nullable=True)  # Days >= 1.00 in precip
-    DSND: Mapped[float] = mapped_column(Float, nullable=True)  # Days snow depth >= 1 in
-    DSNW: Mapped[float] = mapped_column(Float, nullable=True)  # Days snowfall >= 1 in
-    DT00: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp <= 0 F
-    DT32: Mapped[float] = mapped_column(Float, nullable=True)  # Days min temp <= 32 F
-    DX32: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp <= 32 F
-    DX70: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 70 F
-    DX90: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 90 F
-    DYFG: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 90 F
-    DYHF: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 90 F
-    DYNT: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 90 F
-    DYSD: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 90 F
-    DYSN: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 90 F
-    DYTS: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 90 F
-    DYXP: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 90 F
-    DYXT: Mapped[float] = mapped_column(Float, nullable=True)  # Days max temp >= 90 F
-    EMNT: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme min temp
-    EMSD: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme min temp
-    EMSN: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme min temp
-    EMXP: Mapped[float] = mapped_column(Float, nullable=True)  # Highest daily precip total
-    EMXT: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme max temp
-    HDSD: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme max temp
-    HTDD: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme max temp
-    PRCP: Mapped[float] = mapped_column(Float, nullable=True)  # Total Monthly Precipitation
+    CDSD: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Cooling Degree Days (season-to-date)
+    CLDD: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Cooling Degree Days. Computed when daily average temperature is more than 65 degrees Fahrenheit/18.3 degrees Celsius
+    DP01: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days >= 0.01 in precip
+    DP10: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Number of days with precipitation ≥ 0.10 inch (2.54 mm)
+    DP1X: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days >= 1.00 in precip
+    DSND: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days snow depth >= 1 in
+    DSNW: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days snowfall >= 1 in
+    DT00: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days max temp <= 0 F
+    DT32: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days min temp <= 32 F
+    DX32: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days max temp <= 32 F
+    DX70: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days max temp >= 70 F
+    DX90: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days max temp >= 90 F
+    DYFG: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Number of Days with Fog
+    DYHF: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Number of Days with Heavy Fog (visibility less than 1/4 statute mile)
+    DYNT: Mapped[int] = mapped_column(
+        Integer, nullable=True
+    )  # Day of month on which extreme minimum temperature (EMNT) occurred (1–31)
+    DYSD: Mapped[int] = mapped_column(Integer, nullable=True)  # Day of month of highest daily snow depth (EMSD)
+    DYSN: Mapped[int] = mapped_column(Integer, nullable=True)  # Day of month of highest daily snowfall (EMSN)
+    DYTS: Mapped[int] = mapped_column(Integer, nullable=True)  # Number of days with thunderstorms in month
+    DYXP: Mapped[int] = mapped_column(Integer, nullable=True)  # Day of month of highest daily precipitation total (EMXP)
+    DYXT: Mapped[int] = mapped_column(Integer, nullable=True)  # Day of month on which extreme maximum temperature (EMXT) occurred (1–31)
+    EMNT: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme minimum temperature for the month (lowest daily minimum)
+    EMSD: Mapped[float] = mapped_column(Float, nullable=True)  # Highest daily snow depth for the month
+    EMSN: Mapped[float] = mapped_column(Float, nullable=True)  # Highest daily snowfall for the month
+    EMXP: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Highest daily precipitation total for the month
+    EMXT: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme maximum temperature for the month (highest daily maximum)
+    HDSD: Mapped[float] = mapped_column(Float, nullable=True)  # Heating Degree Days (season-to-date)
+    HTDD: Mapped[float] = mapped_column(Float, nullable=True)  # Heating Degree Days (monthly total)
+    PRCP: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Total Monthly Precipitation
     SNOW: Mapped[float] = mapped_column(Float, nullable=True)  # Total Monthly Snowfall
-    TAVG: Mapped[float] = mapped_column(Float, nullable=True)  # Average Monthly Temperature
-    TMAX: Mapped[float] = mapped_column(Float, nullable=True)  # Monthly Maximum Temperature (avg of daily max)
-    TMIN: Mapped[float] = mapped_column(Float, nullable=True)  # Monthly Minimum Temperature (avg of daily min)
-    WDF2: Mapped[float] = mapped_column(Float, nullable=True)  # Monthly Minimum Temperature (avg of daily min)
-    WDF5: Mapped[float] = mapped_column(Float, nullable=True)  # Monthly Minimum Temperature (avg of daily min)
-    WSF2: Mapped[float] = mapped_column(Float, nullable=True)  # Monthly Minimum Temperature (avg of daily min)
-    WSF5: Mapped[float] = mapped_column(Float, nullable=True)  # Monthly Minimum Temperature (avg of daily min)
+    TAVG: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Average Monthly Temperature
+    TMAX: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Monthly Maximum Temperature (avg of daily max)
+    TMIN: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Monthly Minimum Temperature (avg of daily min)
+    WDF2: Mapped[int] = mapped_column(
+        Integer, nullable=True
+    )  # Direction (degrees) of fastest 2-minute wind
+    WDF5: Mapped[int] = mapped_column(
+        Integer, nullable=True
+    )  # Direction (degrees) of fastest 5-second wind
+    WSF2: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Fastest 2-minute wind speed (units per dataset, typically mph)
+    WSF5: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Fastest 5-second wind speed (units per dataset, typically mph)
 
 
 @dataclass
