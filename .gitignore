@@ -36,7 +36,6 @@ test/test_schema.db
 /pip-wheel-metadata/
 /.vscode/
 /.ipynb_checkpoints/
-*.ipynb
 /querytest.db
 /.pytest_cache
 /db_idents.txt
