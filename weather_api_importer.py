@@ -1,4 +1,3 @@
-
 import openmeteo_requests
 import requests_cache
 import pandas as pd
@@ -7,7 +6,6 @@ from retry_requests import retry
 from sqlalchemy import insert
 from models import HourlyWeatherRecord
 from constants import ENGINE, LATITUDE, LONGITUDE
-from models import HourlyWeatherRecordInstance
 
 
 def get_hourly_weather_records_by_date(start_date: str, end_date: str) -> DataFrame:

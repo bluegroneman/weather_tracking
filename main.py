@@ -1,4 +1,4 @@
-from sqlalchemy import insert, text, select
+from sqlalchemy import insert, select
 from weather_api_importer import (
     get_hourly_weather_records_by_date,
     insert_hourly_weather_records,
@@ -10,7 +10,6 @@ from models import (
     Location,
     HourlyWeatherRecord,
     DailyWeatherRecord,
-    DailyWeatherRecordInstance,
 )
 import pandas as pd
 import typer
