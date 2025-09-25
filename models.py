@@ -21,6 +21,23 @@ class Base(DeclarativeBase):
     pass
 
 
+class MonthlyWeatherRecord(Base):
+    __tablename__ = "monthly_weather"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    location_id: Mapped[int] = mapped_column(ForeignKey("location.id"))
+    date: Mapped[Date] = mapped_column(Date, unique=True)
+    month: Mapped[int] = mapped_column(Integer)
+    year: Mapped[int] = mapped_column(Integer)
+    average_temperature: Mapped[float] = mapped_column(Float, nullable=True)
+    min_temperature: Mapped[float] = mapped_column(Float, nullable=True)
+    max_temperature: Mapped[float] = mapped_column(Float, nullable=True)
+    average_wind_speed: Mapped[float] = mapped_column(Float, nullable=True)
+    min_wind_speed: Mapped[Float] = mapped_column(Float, nullable=True)
+    max_wind_speed: Mapped[float] = mapped_column(Float, nullable=True)
+    precipitation_sum: Mapped[float] = mapped_column(Float, nullable=True)
+    precipitation_min: Mapped[float] = mapped_column(Float, nullable=True)
+    precipitation_max: Mapped[float] = mapped_column(Float, nullable=True)
+
 class DailyWeatherRecord(Base):
     __tablename__ = "daily_weather"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -78,6 +95,23 @@ class Location(Base):
     longitude: Mapped[String] = mapped_column(String)
     friendly_name: Mapped[String] = mapped_column(String)
 
+
+class OMSolarHourlyWeatherRecord(Base):
+    __tablename__ = "om_solar_hourly_weather"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    location_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("location.id"), default=1
+    )
+    date: Mapped[DateTime] = mapped_column(DateTime, unique=True)
+    shortwave_radiation: Mapped[float] = mapped_column(Float, nullable=True)
+    direct_radiation: Mapped[float] = mapped_column(Float, nullable=True)
+    diffuse_radiation: Mapped[float] = mapped_column(Float, nullable=True)
+    direct_normal_irradiance: Mapped[float] = mapped_column(Float, nullable=True)
+    global_tilted_irradiance: Mapped[float] = mapped_column(Float, nullable=True)
+    soil_temperature_0cm: Mapped[float] = mapped_column(Float, nullable=True)
+    soil_temperature_6cm: Mapped[float] = mapped_column(Float, nullable=True)
+    soil_temperature_18cm: Mapped[float] = mapped_column(Float, nullable=True)
+    soil_temperature_54cm: Mapped[float] = mapped_column(Float, nullable=True)
 
 class HourlyWeatherRecord(Base):
     __tablename__ = "hourly_weather"
@@ -208,3 +242,17 @@ class DailyWeatherRecordInstance:
     @classmethod
     def to_dataframe(cls) -> DataFrame:
         return DataFrame(cls)
+
+@dataclass
+class MonthlyWeatherRecordInstance:
+    location_id: int
+    date: datetime
+    average_temperature: float
+    min_temperature: float
+    max_temperature: float
+    average_wind_speed: float
+    min_wind_speed: float
+    max_wind_speed: float
+    precipitation_sum: float
+    precipitation_min: float
+    precipitation_max: float
