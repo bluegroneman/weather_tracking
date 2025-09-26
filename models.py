@@ -38,6 +38,7 @@ class MonthlyWeatherRecord(Base):
     precipitation_min: Mapped[float] = mapped_column(Float, nullable=True)
     precipitation_max: Mapped[float] = mapped_column(Float, nullable=True)
 
+
 class DailyWeatherRecord(Base):
     __tablename__ = "daily_weather"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -108,10 +109,28 @@ class OMSolarHourlyWeatherRecord(Base):
     diffuse_radiation: Mapped[float] = mapped_column(Float, nullable=True)
     direct_normal_irradiance: Mapped[float] = mapped_column(Float, nullable=True)
     global_tilted_irradiance: Mapped[float] = mapped_column(Float, nullable=True)
-    soil_temperature_0cm: Mapped[float] = mapped_column(Float, nullable=True)
-    soil_temperature_6cm: Mapped[float] = mapped_column(Float, nullable=True)
-    soil_temperature_18cm: Mapped[float] = mapped_column(Float, nullable=True)
-    soil_temperature_54cm: Mapped[float] = mapped_column(Float, nullable=True)
+
+
+class OMSolarMonthlyWeatherRecord(Base):
+    __tablename__ = "om_solar_monthly_weather"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    location_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("location.id"), default=1
+    )
+    date: Mapped[DateTime] = mapped_column(DateTime, unique=True)
+    avg_shortwave_radiation: Mapped[float] = mapped_column(Float, nullable=True)
+    max_shortwave_radiation: Mapped[float] = mapped_column(Float, nullable=True)
+    min_shortwave_radiation: Mapped[float] = mapped_column(Float, nullable=True)
+    avg_direct_radiation: Mapped[float] = mapped_column(Float, nullable=True)
+    max_direct_radiation: Mapped[float] = mapped_column(Float, nullable=True)
+    min_direct_radiation: Mapped[float] = mapped_column(Float, nullable=True)
+    avg_direct_normal_irradiance: Mapped[float] = mapped_column(Float, nullable=True)
+    max_direct_normal_irradiance: Mapped[float] = mapped_column(Float, nullable=True)
+    min_direct_normal_irradiance: Mapped[float] = mapped_column(Float, nullable=True)
+    avg_global_tilted_irradiance: Mapped[float] = mapped_column(Float, nullable=True)
+    max_global_tilted_irradiance: Mapped[float] = mapped_column(Float, nullable=True)
+    min_global_tilted_irradiance: Mapped[float] = mapped_column(Float, nullable=True)
+
 
 class HourlyWeatherRecord(Base):
     __tablename__ = "hourly_weather"
@@ -155,37 +174,81 @@ class NOAAStationMonthlySummary(Base):
     CLDD: Mapped[float] = mapped_column(
         Float, nullable=True
     )  # Cooling Degree Days. Computed when daily average temperature is more than 65 degrees Fahrenheit/18.3 degrees Celsius
-    DP01: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days >= 0.01 in precip
-    DP10: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Number of days with precipitation ≥ 0.10 inch (2.54 mm)
-    DP1X: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days >= 1.00 in precip
-    DSND: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days snow depth >= 1 in
-    DSNW: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days snowfall >= 1 in
-    DT00: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days max temp <= 0 F
-    DT32: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days min temp <= 32 F
-    DX32: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days max temp <= 32 F
-    DX70: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days max temp >= 70 F
-    DX90: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Days max temp >= 90 F
-    DYFG: Mapped[Integer] = mapped_column(Integer, nullable=True)  # Number of Days with Fog
+    DP01: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Days >= 0.01 in precip
+    DP10: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Number of days with precipitation ≥ 0.10 inch (2.54 mm)
+    DP1X: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Days >= 1.00 in precip
+    DSND: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Days snow depth >= 1 in
+    DSNW: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Days snowfall >= 1 in
+    DT00: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Days max temp <= 0 F
+    DT32: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Days min temp <= 32 F
+    DX32: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Days max temp <= 32 F
+    DX70: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Days max temp >= 70 F
+    DX90: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Days max temp >= 90 F
+    DYFG: Mapped[Integer] = mapped_column(
+        Integer, nullable=True
+    )  # Number of Days with Fog
     DYHF: Mapped[Integer] = mapped_column(
         Integer, nullable=True
     )  # Number of Days with Heavy Fog (visibility less than 1/4 statute mile)
     DYNT: Mapped[int] = mapped_column(
         Integer, nullable=True
     )  # Day of month on which extreme minimum temperature (EMNT) occurred (1–31)
-    DYSD: Mapped[int] = mapped_column(Integer, nullable=True)  # Day of month of highest daily snow depth (EMSD)
-    DYSN: Mapped[int] = mapped_column(Integer, nullable=True)  # Day of month of highest daily snowfall (EMSN)
-    DYTS: Mapped[int] = mapped_column(Integer, nullable=True)  # Number of days with thunderstorms in month
-    DYXP: Mapped[int] = mapped_column(Integer, nullable=True)  # Day of month of highest daily precipitation total (EMXP)
-    DYXT: Mapped[int] = mapped_column(Integer, nullable=True)  # Day of month on which extreme maximum temperature (EMXT) occurred (1–31)
-    EMNT: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme minimum temperature for the month (lowest daily minimum)
-    EMSD: Mapped[float] = mapped_column(Float, nullable=True)  # Highest daily snow depth for the month
-    EMSN: Mapped[float] = mapped_column(Float, nullable=True)  # Highest daily snowfall for the month
+    DYSD: Mapped[int] = mapped_column(
+        Integer, nullable=True
+    )  # Day of month of highest daily snow depth (EMSD)
+    DYSN: Mapped[int] = mapped_column(
+        Integer, nullable=True
+    )  # Day of month of highest daily snowfall (EMSN)
+    DYTS: Mapped[int] = mapped_column(
+        Integer, nullable=True
+    )  # Number of days with thunderstorms in month
+    DYXP: Mapped[int] = mapped_column(
+        Integer, nullable=True
+    )  # Day of month of highest daily precipitation total (EMXP)
+    DYXT: Mapped[int] = mapped_column(
+        Integer, nullable=True
+    )  # Day of month on which extreme maximum temperature (EMXT) occurred (1–31)
+    EMNT: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Extreme minimum temperature for the month (lowest daily minimum)
+    EMSD: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Highest daily snow depth for the month
+    EMSN: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Highest daily snowfall for the month
     EMXP: Mapped[float] = mapped_column(
         Float, nullable=True
     )  # Highest daily precipitation total for the month
-    EMXT: Mapped[float] = mapped_column(Float, nullable=True)  # Extreme maximum temperature for the month (highest daily maximum)
-    HDSD: Mapped[float] = mapped_column(Float, nullable=True)  # Heating Degree Days (season-to-date)
-    HTDD: Mapped[float] = mapped_column(Float, nullable=True)  # Heating Degree Days (monthly total)
+    EMXT: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Extreme maximum temperature for the month (highest daily maximum)
+    HDSD: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Heating Degree Days (season-to-date)
+    HTDD: Mapped[float] = mapped_column(
+        Float, nullable=True
+    )  # Heating Degree Days (monthly total)
     PRCP: Mapped[float] = mapped_column(
         Float, nullable=True
     )  # Total Monthly Precipitation
@@ -242,6 +305,7 @@ class DailyWeatherRecordInstance:
     @classmethod
     def to_dataframe(cls) -> DataFrame:
         return DataFrame(cls)
+
 
 @dataclass
 class MonthlyWeatherRecordInstance:

@@ -122,10 +122,10 @@ def import_weather_data(
 
     insert_hourly_weather_records(records)
 
+
 @app.command()
 def build_daily_summaries():
-    """Build daily_weather from ALL data in hourly_weather using pandas.
-    """
+    """Build daily_weather from ALL data in hourly_weather using pandas."""
     DailyWeatherRecord.__table__.drop(ENGINE, checkfirst=True)
     DailyWeatherRecord.__table__.create(ENGINE, checkfirst=True)
 
@@ -148,7 +148,8 @@ def build_daily_summaries():
 
     # Group by day and compute aggregates via pandas
     agg_df = (
-        hourly_df.groupby("day").agg(
+        hourly_df.groupby("day")
+        .agg(
             average_temperature=("temperature", "mean"),
             min_temperature=("temperature", "min"),
             max_temperature=("temperature", "max"),

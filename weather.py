@@ -48,15 +48,19 @@ def create_hourly_csv() -> None:
     with ENGINE.connect() as conn:
         results = conn.execute(stmt)
     hourly_weather_records = pd.DataFrame(results.fetchall())
-    hourly_weather_records['date'] = pd.to_datetime(hourly_weather_records['date'])
+    hourly_weather_records["date"] = pd.to_datetime(hourly_weather_records["date"])
     # Convert to RFC3339 date format for InfluxDB to import
-    hourly_weather_records['date'] = hourly_weather_records['date'].dt.strftime("%Y-%m-%dT%H:%M:%S.%f")
+    hourly_weather_records["date"] = hourly_weather_records["date"].dt.strftime(
+        "%Y-%m-%dT%H:%M:%S.%f"
+    )
     file_name = "hourly_weather_records.csv"
     hourly_weather_records.to_csv(file_name, index=False)
-    with open(file_name, 'r') as read_file:
+    with open(file_name, "r") as read_file:
         file_data = read_file.readlines()
-    with open(file_name, 'w') as write_file:
-        prepend_line = "#datatype lander_weather,long,dateTime:RFC3339,double,double,double\n"
+    with open(file_name, "w") as write_file:
+        prepend_line = (
+            "#datatype lander_weather,long,dateTime:RFC3339,double,double,double\n"
+        )
         file_data.insert(0, prepend_line)
         write_file.writelines(file_data)
 
